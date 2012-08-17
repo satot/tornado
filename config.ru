@@ -1,1 +1,1 @@
-require 'web' ; run Sinatra::Application
+web: bundle exec rackup config.ru -p $PORT
