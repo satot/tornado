@@ -10,59 +10,59 @@ KEY = "$KEY"
 SECRET = "$SECRET"
 
 configure do
-    set :sessions, true
-    enable :sessions
-    use Rack::Session::Cookie, :secret => SecureRandom.hex(32)
+  set :sessions, true
+  enable :sessions
+  use Rack::Session::Cookie, :secret => SecureRandom.hex(32)
 end
 
 helpers do
-    def oauth_consumer
-        OAuth::Consumer.new(KEY, SECRET, :site => "http://twitter.com")
-    end
+  def oauth_consumer
+    OAuth::Consumer.new(KEY, SECRET, :site => "http://twitter.com")
+  end
 end
 
 
 get '/' do
-    if session[:access_token]
-        erb :index
-    else
-        redirect '/login'
-    end
+  if session[:access_token]
+    erb :index
+  else
+    redirect '/login'
+  end
 end
 
 get '/login' do
-    erb :login
+  erb :login
 end
 
 get '/logout' do
-    session.clear
-    redirect '/login'
+  session.clear
+  redirect '/login'
 end
 
 get '/auth' do
-    callback_url = "http://localhost:4567/auth_success"
-    request_token = oauth_consumer.get_request_token(:oauth_callback => callback_url)
-    session[:request_token] = request_token.token
-    session[:request_token_secret] = request_token.secret
-    redirect request_token.authorize_url
+  callback_url = "http://localhost:4567/auth_success"
+  request_token = oauth_consumer.get_request_token(:oauth_callback => callback_url)
+  session[:request_token] = request_token.token
+  session[:request_token_secret] = request_token.secret
+  redirect request_token.authorize_url
 end
 
 get '/auth_success' do
-    request_token = OAuth::RequestToken.new(oauth_consumer, session[:request_token], session[:request_token_secret])
-    begin
-        @access_token = request_token.get_access_token(
-            {},
-            :oauth_token => params[:oauth_token],
-            :oauth_verifier => params[:oauth_verifier])
-    rescue OAuth::Unauthorized => @exception
-        puts(@exception.message)
-        return erb %{ oauth failed }
-    end
+  request_token = OAuth::RequestToken.new(oauth_consumer, session[:request_token], session[:request_token_secret])
+  begin
+    @access_token = request_token.get_access_token(
+      {},
+      :oauth_token => params[:oauth_token],
+      :oauth_verifier => params[:oauth_verifier])
+  rescue OAuth::Unauthorized => @exception
+    puts(@exception.message)
+    return erb %{ oauth failed }
+  end
 
-    session[:access_token] = @access_token.token
-    session[:access_token_secret] = @access_token.secret
+  session[:access_token] = @access_token.token
+  session[:access_token_secret] = @access_token.secret
 
-    redirect '/'
+  redirect '/'
 end
 
 ## static file contents
